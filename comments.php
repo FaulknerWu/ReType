@@ -15,8 +15,8 @@
 
         <nav aria-label="评论分页" class="mt-4">
             <?php $comments->pageNav(
-                '&laquo; 前一页', 
-                '后一页 &raquo;', 
+                '&laquo; ' . _t('前一页'), 
+                _t('后一页') . ' &raquo;', 
                 '2', 
                 '...', 
                 [

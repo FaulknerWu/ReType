@@ -19,10 +19,11 @@
         <?php while ($this->next()): ?>
             <article class="post-card mb-4 shadow-sm border rounded-3 p-4" 
                      itemscope itemtype="http://schema.org/BlogPosting">
-                <?php if (isset($this->fields->thumbnail) && $this->fields->thumbnail): ?>
+                <?php $thumbnailUrl = retypeGetThumbnailUrl($this); ?>
+                <?php if ($thumbnailUrl): ?>
                     <div class="post-thumbnail mb-3">
                         <a href="<?php $this->permalink(); ?>" class="d-block">
-                            <img src="<?php echo $this->fields->thumbnail; ?>" 
+                            <img src="<?php echo $thumbnailUrl; ?>" 
                                  alt="<?php $this->title(); ?>"
                                  class="img-fluid rounded w-100"
                                  loading="lazy"
@@ -39,30 +40,9 @@
                     </a>
                 </h2>
 
-                <div class="post-meta text-muted mb-3">
-                    <span class="me-3">
-                        <i class="bi bi-person-circle"></i> 
-                        <a href="<?php $this->author->permalink(); ?>" itemprop="author">
-                            <?php $this->author(); ?>
-                        </a>
-                    </span>
-                    <span class="me-3">
-                        <i class="bi bi-calendar3"></i> 
-                        <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished">
-                            <?php $this->date(); ?>
-                        </time>
-                    </span>
-                    <span class="me-3">
-                        <i class="bi bi-folder2"></i> 
-                        <?php $this->category(','); ?>
-                    </span>
-                    <span>
-                        <i class="bi bi-chat-left"></i> 
-                        <a href="<?php $this->permalink(); ?>#comments">
-                            <?php $this->commentsNum('评论', '1 条评论', '%d 条评论'); ?>
-                        </a>
-                    </span>
-                </div>
+                <?php retypeRenderPostMeta($this, [
+                    'containerClass' => 'post-meta text-muted mb-3'
+                ]); ?>
 
                 <div class="post-excerpt mb-3" itemprop="description">
                     <?php $this->excerpt(150, '...'); ?>
@@ -79,7 +59,7 @@
 
         <!-- 分页导航 -->
         <nav aria-label="文章分页导航" class="my-4">
-            <?php $this->pageNav('&laquo; 前一页', '后一页 &raquo;'); ?>
+            <?php $this->pageNav('&laquo; ' . _t('前一页'), _t('后一页') . ' &raquo;'); ?>
         </nav>
 
     <?php else: ?>

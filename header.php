@@ -27,7 +27,7 @@
     <script defer src="https://cdn.faulkner.fun/libs/bootstrap/5.3.5/js/bootstrap.bundle.min.js"></script>
 
     <!-- LaTeX Support -->
-    <?php if (($this->is('post') && $this->fields->isLatex == 1) || $this->is('index')): ?>
+    <?php if (retypeShouldLoadLatex($this)): ?>
         <link rel="stylesheet" href="https://cdn.faulkner.fun/libs/katex/0.16.22/katex.min.css">
         <script defer src="https://cdn.faulkner.fun/libs/katex/0.16.22/katex.min.js"></script>
         <script defer src="https://cdn.faulkner.fun/libs/katex/0.16.22/contrib/auto-render.min.js"></script>
@@ -99,21 +99,21 @@
                                 <a class="nav-link<?php if ($this->is('page', 'links')): ?> active fw-bold<?php endif; ?>"
                                    href="<?php $this->options->siteUrl('links.html'); ?>"
                                    <?php if ($this->is('page', 'links')): ?>aria-current="page"<?php endif; ?>>
-                                    <i class="bi bi-link me-1"></i>友情链接
+                                    <i class="bi bi-link me-1"></i><?php _e('友情链接'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link<?php if ($this->is('archive')): ?> active fw-bold<?php endif; ?>"
                                    href="<?php $this->options->siteUrl('archive.html'); ?>"
                                    <?php if ($this->is('archive')): ?>aria-current="page"<?php endif; ?>>
-                                    <i class="bi bi-archive me-1"></i>文章归档
+                                    <i class="bi bi-archive me-1"></i><?php _e('文章归档'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link<?php if ($this->is('page', 'start-page')): ?> active fw-bold<?php endif; ?>"
                                    href="<?php $this->options->siteUrl('start-page.html'); ?>"
                                    <?php if ($this->is('page', 'start-page')): ?>aria-current="page"<?php endif; ?>>
-                                    <i class="bi bi-info-circle me-1"></i>关于本站
+                                    <i class="bi bi-info-circle me-1"></i><?php _e('关于本站'); ?>
                                 </a>
                             </li>
                         </ul>
@@ -121,9 +121,9 @@
                             <li class="nav-item">
                                 <a class="nav-link<?php if ($this->is('feed')): ?> active fw-bold<?php endif; ?>"
                                    href="<?php $this->options->feedUrl(); ?>"
-                                   title="RSS订阅"
+                                   title="<?php _e('RSS订阅'); ?>"
                                    <?php if ($this->is('feed')): ?>aria-current="page"<?php endif; ?>>
-                                    <i class="bi bi-rss"></i> RSS订阅
+                                    <i class="bi bi-rss"></i> <?php _e('RSS订阅'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -153,7 +153,7 @@
             });
 
             // Initialize LaTeX rendering if enabled
-            <?php if (($this->is('post') && $this->fields->isLatex == 1) || $this->is('index')): ?>
+            <?php if (retypeShouldLoadLatex($this)): ?>
                 if (typeof renderMathInElement !== 'undefined') {
                     renderMathInElement(document.body, {
                         delimiters: [

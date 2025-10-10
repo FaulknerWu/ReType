@@ -22,10 +22,11 @@ $this->need('header.php');
                 <?php while ($this->next()): ?>
                     <article class="post-card mb-4 shadow-sm border rounded-3 p-4" 
                              itemscope itemtype="http://schema.org/BlogPosting">
-                        <?php if (isset($this->fields->thumbnail) && $this->fields->thumbnail): ?>
+                        <?php $thumbnailUrl = retypeGetThumbnailUrl($this); ?>
+                        <?php if ($thumbnailUrl): ?>
                             <div class="post-thumbnail mb-3">
                                 <a href="<?php $this->permalink(); ?>" class="d-block">
-                                    <img src="<?php echo $this->fields->thumbnail; ?>" 
+                                    <img src="<?php echo $thumbnailUrl; ?>" 
                                          alt="<?php $this->title(); ?>"
                                          class="img-fluid rounded w-100"
                                          loading="lazy">
@@ -41,28 +42,7 @@ $this->need('header.php');
                             </a>
                         </h2>
 
-                        <div class="post-meta d-flex flex-wrap mb-3 text-muted small">
-                            <span class="me-3">
-                                <i class="bi bi-person-circle"></i> 
-                                <span itemprop="author"><?php $this->author(); ?></span>
-                            </span>
-                            <span class="me-3">
-                                <i class="bi bi-calendar3"></i> 
-                                <time datetime="<?php $this->date('c'); ?>" itemprop="datePublished">
-                                    <?php $this->date(); ?>
-                                </time>
-                            </span>
-                            <span class="me-3">
-                                <i class="bi bi-folder2"></i> 
-                                <?php $this->category(','); ?>
-                            </span>
-                            <span>
-                                <i class="bi bi-chat-left"></i> 
-                                <a href="<?php $this->permalink(); ?>#comments">
-                                    <?php $this->commentsNum('评论', '1 条评论', '%d 条评论'); ?>
-                                </a>
-                            </span>
-                        </div>
+                        <?php retypeRenderPostMeta($this); ?>
 
                         <div class="post-content" itemprop="articleBody">
                             <?php $this->content(''); ?>
@@ -71,18 +51,18 @@ $this->need('header.php');
                         <div class="text-end mt-3">
                             <a href="<?php $this->permalink(); ?>" 
                                class="btn btn-outline-primary btn-sm">
-                                阅读全文 <i class="bi bi-arrow-right"></i>
+                                <?php _e('阅读全文'); ?> <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </article>
                 <?php endwhile; ?>
 
-                <?php $this->pageNav('&laquo; 前一页', '后一页 &raquo;'); ?>
+                <?php $this->pageNav('&laquo; ' . _t('前一页'), _t('后一页') . ' &raquo;'); ?>
 
             <?php else: ?>
                 <div class="alert alert-info shadow-sm p-4 text-center">
                     <i class="bi bi-info-circle fs-4 mb-2 d-block"></i>
-                    <p class="mb-0">暂无文章</p>
+                    <p class="mb-0"><?php _e('暂无文章'); ?></p>
                 </div>
             <?php endif; ?>
         </div>
