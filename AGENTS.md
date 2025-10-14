@@ -2,6 +2,8 @@
 
 This repository contains the ReType theme for Typecho blogs. Keep changes scoped, reversible, and documented so other contributors can evaluate them quickly.
 
+Always respond in Chinese-simplified.
+
 ## Project Structure & Module Organization
 - `index.php`, `archive.php`, `page.php`, `post.php`, and `404.php` implement the main template routes; mirror Typecho’s hierarchy when adding new views.
 - `functions.php` defines configurable options (`themeConfig`, `themeFields`). Extend these helpers instead of introducing global state or ad-hoc settings.
