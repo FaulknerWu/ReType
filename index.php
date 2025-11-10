@@ -20,41 +20,11 @@ $this->need('header.php');
         <div class="col-12" id="main" role="main">
             <?php if ($this->have()): ?>
                 <?php while ($this->next()): ?>
-                    <article class="post-card mb-4 shadow-sm border rounded-3 p-4" 
-                             itemscope itemtype="http://schema.org/BlogPosting">
-                        <?php $thumbnailUrl = retypeGetThumbnailUrl($this); ?>
-                        <?php if ($thumbnailUrl): ?>
-                            <div class="post-thumbnail mb-3">
-                                <a href="<?php $this->permalink(); ?>" class="d-block">
-                                    <img src="<?php echo $thumbnailUrl; ?>" 
-                                         alt="<?php $this->title(); ?>"
-                                         class="img-fluid rounded w-100"
-                                         loading="lazy">
-                                </a>
-                            </div>
-                        <?php endif; ?>
-
-                        <h2 class="fw-bold mb-3" itemprop="headline">
-                            <a href="<?php $this->permalink(); ?>" 
-                               class="text-decoration-none link-dark"
-                               itemprop="url">
-                                <?php $this->title(); ?>
-                            </a>
-                        </h2>
-
-                        <?php retypeRenderPostMeta($this); ?>
-
-                        <div class="post-content" itemprop="articleBody">
-                            <?php $this->content(''); ?>
-                        </div>
-
-                        <div class="text-end mt-3">
-                            <a href="<?php $this->permalink(); ?>" 
-                               class="btn btn-outline-primary btn-sm">
-                                <?php _e('阅读全文'); ?> <i class="bi bi-arrow-right"></i>
-                            </a>
-                        </div>
-                    </article>
+                    <?php retypeRenderPostCard($this, [
+                        'titleClass'     => 'fw-bold mb-3',
+                        'titleLinkClass' => 'text-decoration-none link-dark',
+                        'readMore'       => ['enabled' => true],
+                    ]); ?>
                 <?php endwhile; ?>
 
                 <?php $this->pageNav('&laquo; ' . _t('前一页'), _t('后一页') . ' &raquo;'); ?>

@@ -17,44 +17,15 @@
     <!-- 文章列表部分 -->
     <?php if ($this->have()): ?>
         <?php while ($this->next()): ?>
-            <article class="post-card mb-4 shadow-sm border rounded-3 p-4" 
-                     itemscope itemtype="http://schema.org/BlogPosting">
-                <?php $thumbnailUrl = retypeGetThumbnailUrl($this); ?>
-                <?php if ($thumbnailUrl): ?>
-                    <div class="post-thumbnail mb-3">
-                        <a href="<?php $this->permalink(); ?>" class="d-block">
-                            <img src="<?php echo $thumbnailUrl; ?>" 
-                                 alt="<?php $this->title(); ?>"
-                                 class="img-fluid rounded w-100"
-                                 loading="lazy"
-                                 itemprop="image">
-                        </a>
-                    </div>
-                <?php endif; ?>
-
-                <h2 class="post-title fw-bold mb-3" itemprop="headline">
-                    <a class="text-decoration-none text-dark" 
-                       itemprop="url"
-                       href="<?php $this->permalink(); ?>">
-                        <?php $this->title(); ?>
-                    </a>
-                </h2>
-
-                <?php retypeRenderPostMeta($this, [
-                    'containerClass' => 'post-meta text-muted mb-3'
-                ]); ?>
-
-                <div class="post-excerpt mb-3" itemprop="description">
-                    <?php $this->excerpt(150, '...'); ?>
-                </div>
-
-                <?php if ($this->tags): ?>
-                    <div class="tags">
-                        <i class="bi bi-tags"></i>
-                        <?php $this->tags('<span class="badge bg-light text-dark me-1">', '</span>', ''); ?>
-                    </div>
-                <?php endif; ?>
-            </article>
+            <?php retypeRenderPostCard($this, [
+                'contentMode'      => 'excerpt',
+                'metaOptions'      => ['containerClass' => 'post-meta text-muted mb-3'],
+                'showTags'         => true,
+                'tagsWrapperClass' => 'tags',
+                'tagsIconClass'    => 'bi bi-tags',
+                'tagBadgeClass'    => 'badge bg-light text-dark me-1',
+                'emptyTagText'     => '',
+            ]); ?>
         <?php endwhile; ?>
 
         <!-- 分页导航 -->

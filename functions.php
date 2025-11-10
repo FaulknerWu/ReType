@@ -110,20 +110,6 @@ function themeConfig($form)
     );
     $form->addInput($katexAutoRenderJsUrl);
 
-    $sidebarBlock = new \Typecho\Widget\Helper\Form\Element\Checkbox(
-        'sidebarBlock',
-        [
-            'ShowRecentPosts'    => _t('显示最新文章'),
-            'ShowRecentComments' => _t('显示最近回复'),
-            'ShowCategory'       => _t('显示分类'),
-            'ShowArchive'        => _t('显示归档'),
-            'ShowOther'          => _t('显示其它杂项')
-        ],
-        ['ShowRecentPosts', 'ShowRecentComments', 'ShowCategory', 'ShowArchive', 'ShowOther'],
-        _t('侧边栏显示')
-    );
-    $form->addInput($sidebarBlock->multiMode());
-
     $icpNumber = new \Typecho\Widget\Helper\Form\Element\Text(
         'icpNumber',
         null,
@@ -394,4 +380,126 @@ function retypeRenderPostMeta($archive, array $options = [])
     }
 
     echo '</div>';
+}
+
+/**
+ * Render a unified post list/card item to avoid repeated markup in templates.
+ *
+ * @param \Typecho_Widget_Archive $archive 当前文章对象
+ * @param array $options 输出配置
+ * @return void
+ */
+function retypeRenderPostCard($archive, array $options = [])
+{
+    $defaults = [
+        'wrapperClass'     => 'post-card mb-4 shadow-sm border rounded-3 p-4',
+        'schemaType'       => 'http://schema.org/BlogPosting',
+        'headingTag'       => 'h2',
+        'titleClass'       => 'post-title fw-bold mb-3',
+        'contentClass'     => 'post-content',
+        'excerptClass'     => 'post-excerpt mb-3',
+        'contentMode'      => 'content', // content|excerpt
+        'excerptLength'    => 150,
+        'excerptSuffix'    => '...',
+        'titleLinkClass'   => 'text-decoration-none text-dark',
+        'showTags'         => false,
+        'tagsWrapperClass' => 'tags',
+        'tagsIconClass'    => 'bi bi-tags',
+        'tagBadgeClass'    => 'badge bg-light text-dark me-1',
+        'emptyTagText'     => _t('暂无标签'),
+        'metaOptions'      => [],
+        'readMore'         => [
+            'enabled'      => false,
+            'wrapperClass' => 'text-end mt-3',
+            'buttonClass'  => 'btn btn-outline-primary btn-sm',
+            'label'        => _t('阅读全文'),
+            'iconHtml'     => '<i class="bi bi-arrow-right"></i>',
+        ],
+    ];
+
+    $config = array_merge($defaults, $options);
+    $config['readMore'] = array_merge($defaults['readMore'], $config['readMore']);
+    $metaOptions = isset($config['metaOptions']) && is_array($config['metaOptions'])
+        ? $config['metaOptions']
+        : [];
+
+    $wrapperClass = htmlspecialchars($config['wrapperClass'], ENT_QUOTES);
+    $schemaType = htmlspecialchars($config['schemaType'], ENT_QUOTES);
+    $headingTag = preg_replace('/[^a-z0-9]/i', '', (string)$config['headingTag']);
+    $headingTag = $headingTag !== '' ? strtolower($headingTag) : 'h2';
+    $titleClass = htmlspecialchars($config['titleClass'], ENT_QUOTES);
+    $contentClass = htmlspecialchars($config['contentClass'], ENT_QUOTES);
+    $excerptClass = htmlspecialchars($config['excerptClass'], ENT_QUOTES);
+    $titleLinkClass = htmlspecialchars($config['titleLinkClass'], ENT_QUOTES);
+    $excerptSuffix = htmlspecialchars((string)$config['excerptSuffix'], ENT_QUOTES);
+
+    $thumbnailUrl = retypeGetThumbnailUrl($archive);
+
+    echo '<article class="' . $wrapperClass . '" itemscope itemtype="' . $schemaType . '">';
+
+    if ($thumbnailUrl) {
+        echo '<div class="post-thumbnail mb-3">';
+        echo '<a href="';
+        $archive->permalink();
+        echo '" class="d-block">';
+        echo '<img src="' . $thumbnailUrl . '" alt="';
+        $archive->title();
+        echo '" class="img-fluid rounded w-100" loading="lazy" itemprop="image">';
+        echo '</a>';
+        echo '</div>';
+    }
+
+    echo '<' . $headingTag . ' class="' . $titleClass . '" itemprop="headline">';
+    echo '<a href="';
+    $archive->permalink();
+    echo '" class="' . $titleLinkClass . '" itemprop="url">';
+    $archive->title();
+    echo '</a>';
+    echo '</' . $headingTag . '>';
+
+    retypeRenderPostMeta($archive, $metaOptions);
+
+    $contentAttr = $config['contentMode'] === 'excerpt' ? 'description' : 'articleBody';
+    $contentWrapperClass = $config['contentMode'] === 'excerpt' ? $excerptClass : $contentClass;
+    echo '<div class="' . $contentWrapperClass . '" itemprop="' . $contentAttr . '">';
+    if ($config['contentMode'] === 'excerpt') {
+        $archive->excerpt((int)$config['excerptLength'], $excerptSuffix);
+    } else {
+        $archive->content('');
+    }
+    echo '</div>';
+
+    if ($config['showTags'] && $archive->tags) {
+        $tagsWrapperClass = htmlspecialchars($config['tagsWrapperClass'], ENT_QUOTES);
+        $tagsIconClass = htmlspecialchars($config['tagsIconClass'], ENT_QUOTES);
+        $tagBadgeClass = htmlspecialchars($config['tagBadgeClass'], ENT_QUOTES);
+        echo '<div class="' . $tagsWrapperClass . '">';
+        if ($tagsIconClass !== '') {
+            echo '<i class="' . $tagsIconClass . '"></i> ';
+        }
+        $archive->tags(
+            '<span class="' . $tagBadgeClass . '">',
+            '</span>',
+            htmlspecialchars($config['emptyTagText'], ENT_QUOTES)
+        );
+        echo '</div>';
+    }
+
+    if ($config['readMore']['enabled']) {
+        $readMoreWrapper = htmlspecialchars($config['readMore']['wrapperClass'], ENT_QUOTES);
+        $readMoreBtn = htmlspecialchars($config['readMore']['buttonClass'], ENT_QUOTES);
+        $readMoreLabel = htmlspecialchars($config['readMore']['label'], ENT_QUOTES);
+        echo '<div class="' . $readMoreWrapper . '">';
+        echo '<a href="';
+        $archive->permalink();
+        echo '" class="' . $readMoreBtn . '">';
+        echo $readMoreLabel;
+        if ($config['readMore']['iconHtml'] !== '') {
+            echo ' ' . $config['readMore']['iconHtml'];
+        }
+        echo '</a>';
+        echo '</div>';
+    }
+
+    echo '</article>';
 }
