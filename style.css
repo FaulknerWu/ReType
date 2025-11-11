@@ -138,6 +138,24 @@ textarea {
     padding-top: 2rem;
 }
 
+.retype-navbar .navbar-nav {
+    gap: 0.25rem;
+}
+
+.retype-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.retype-nav-link i {
+    font-size: 1rem;
+}
+
+.retype-search-form .input-group {
+    align-items: stretch;
+}
+
 #footer {
     line-height: 1.6;
     background-color: #ffffff;

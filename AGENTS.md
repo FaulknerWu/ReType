@@ -17,7 +17,7 @@ This repository contains the ReType theme for Typecho blogs. Keep changes scoped
 
 ### 1. `sequential-thinking`
 
-**Inputs** (all map directly to tool parameters):
+**Inputs**:
 
 - `thought` *(string)*: Narrative of the current reasoning step.
 - `nextThoughtNeeded` *(boolean)*: Signal whether another thought should follow immediately.

@@ -29,12 +29,11 @@
             <?php $this->content(); ?>
         </div>
 
-        <?php if ($this->tags): ?>
-            <div class="tags mb-4">
-                <i class="bi bi-tags"></i>
-                <?php $this->tags('<span class="badge bg-light text-dark me-1">', '</span>', _t('暂无标签')); ?>
-            </div>
-        <?php endif; ?>
+        <?php retypeRenderTagBadges($this, [
+            'wrapperClass' => 'tags mb-4',
+            'iconClass'    => 'bi bi-tags',
+            'badgeClass'   => 'badge bg-light text-dark me-1',
+        ]); ?>
     </article>
 
     <?php $this->need('comments.php'); ?>

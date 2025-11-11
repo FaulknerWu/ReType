@@ -1,6 +1,10 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) {
+<?php
+if (!defined('__TYPECHO_ROOT_DIR__')) {
     exit;
-} ?>
+}
+
+$options = retypeGetOptions(isset($this) ? $this : null);
+?>
 
 <div id="comments" class="shadow-sm border rounded-3 p-4 mt-4 bg-white">
     <?php $this->comments()->to($comments); ?>
@@ -53,11 +57,11 @@
                         <div class="col">
                             <p class="text-muted mb-0">
                                 <i class="bi bi-person-circle"></i> <?php _e('登录身份: '); ?>
-                                <a href="<?php $this->options->profileUrl(); ?>" 
+                                <a href="<?php $options->profileUrl(); ?>" 
                                    class="fw-bold text-decoration-none">
                                     <?php $this->user->screenName(); ?>
                                 </a>. 
-                                <a href="<?php $this->options->logoutUrl(); ?>" 
+                                <a href="<?php $options->logoutUrl(); ?>" 
                                    title="退出登录" 
                                    class="text-decoration-none">
                                     <?php _e('退出'); ?> &raquo;
@@ -83,7 +87,7 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <label for="mail" class="col-form-label col-sm-2 <?php echo $this->options->commentsRequireMail ? 'required' : ''; ?>">
+                        <label for="mail" class="col-form-label col-sm-2 <?php echo $options->commentsRequireMail ? 'required' : ''; ?>">
                             <i class="bi bi-envelope"></i> <?php _e('Email'); ?>
                         </label>
                         <div class="col-sm-10">
@@ -92,14 +96,14 @@
                                    id="mail" 
                                    class="form-control shadow-sm"
                                    value="<?php $this->remember('mail'); ?>" 
-                                   <?php if ($this->options->commentsRequireMail): ?>required<?php endif; ?>
+                                   <?php if ($options->commentsRequireMail): ?>required<?php endif; ?>
                                    aria-describedby="mail-help">
                             <div id="mail-help" class="form-text"><?php _e('邮箱地址不会被公开显示'); ?></div>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
-                        <label for="url" class="col-form-label col-sm-2 <?php echo $this->options->commentsRequireURL ? 'required' : ''; ?>">
+                        <label for="url" class="col-form-label col-sm-2 <?php echo $options->commentsRequireURL ? 'required' : ''; ?>">
                             <i class="bi bi-link-45deg"></i> <?php _e('网站'); ?>
                         </label>
                         <div class="col-sm-10">
@@ -109,7 +113,7 @@
                                    class="form-control shadow-sm" 
                                    placeholder="<?php _e('https://'); ?>"
                                    value="<?php $this->remember('url'); ?>" 
-                                   <?php if ($this->options->commentsRequireURL): ?>required<?php endif; ?>
+                                   <?php if ($options->commentsRequireURL): ?>required<?php endif; ?>
                                    aria-describedby="url-help">
                             <div id="url-help" class="form-text"><?php _e('您的个人网站地址（可选）'); ?></div>
                         </div>

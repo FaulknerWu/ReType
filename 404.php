@@ -1,6 +1,10 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) {
+<?php
+if (!defined('__TYPECHO_ROOT_DIR__')) {
     exit;
-} ?>
+}
+
+$options = retypeGetOptions(isset($this) ? $this : null);
+?>
 <?php $this->need('header.php'); ?>
 
 <div class="main-container">
@@ -20,7 +24,7 @@
             </div>
 
             <form method="post" 
-                  action="<?php $this->options->siteUrl(); ?>" 
+                  action="<?php $options->siteUrl(); ?>" 
                   class="mt-5 mb-5"
                   role="search">
                 <div class="input-group mx-auto" style="max-width: 400px;">
@@ -39,7 +43,7 @@
             </form>
 
             <div class="text-center">
-                <a href="<?php $this->options->siteUrl(); ?>" 
+                <a href="<?php $options->siteUrl(); ?>" 
                    class="btn btn-outline-primary">
                     <i class="bi bi-house"></i> <?php _e('返回首页'); ?>
                 </a>

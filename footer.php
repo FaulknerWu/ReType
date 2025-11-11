@@ -1,6 +1,10 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) {
+<?php
+if (!defined('__TYPECHO_ROOT_DIR__')) {
     exit;
-} ?>
+}
+
+$options = retypeGetOptions(isset($this) ? $this : null);
+?>
 
         </main>
 
@@ -10,9 +14,9 @@
                     <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
                         <span class="text-muted">
                             &copy; <?php echo date('Y'); ?> 
-                            <a href="<?php $this->options->siteUrl(); ?>" 
+                            <a href="<?php $options->siteUrl(); ?>" 
                                class="text-decoration-none">
-                                <?php $this->options->title(); ?>
+                                <?php $options->title(); ?>
                             </a>
                         </span>
                     </div>
