@@ -34,12 +34,285 @@ if (!defined('RETYPE_ASSET_DEFAULTS')) {
 }
 
 /**
+ * 将主题设置字段标记为可被导入导出脚本识别。
+ *
+ * @param \Typecho\Widget\Helper\Form\Element $element
+ * @return void
+ */
+function retypeMarkThemeSettingElement(\Typecho\Widget\Helper\Form\Element $element)
+{
+    if (empty($element->name)) {
+        return;
+    }
+
+    $element->setAttribute('data-retype-setting-name', $element->name);
+}
+
+/**
+ * 将主题设置字段添加到表单并自动注入标记。
+ *
+ * @param \Typecho\Widget\Helper\Form $form
+ * @param \Typecho\Widget\Helper\Form\Element $element
+ * @return void
+ */
+function retypeAddThemeSettingInput(\Typecho\Widget\Helper\Form $form, \Typecho\Widget\Helper\Form\Element $element)
+{
+    retypeMarkThemeSettingElement($element);
+    $form->addInput($element);
+}
+
+/**
+ * 注入主题配置导入/导出工具栏。
+ *
+ * @param \Typecho\Widget\Helper\Form $form
+ * @return void
+ */
+function retypeAttachSettingsTransferToolbar(\Typecho\Widget\Helper\Form $form)
+{
+    static $toolbarInjected = false;
+
+    if ($toolbarInjected) {
+        return;
+    }
+
+    $toolbarInjected = true;
+
+    $layout = new \Typecho\Widget\Helper\Layout('ul', [
+        'class' => 'typecho-option retype-config-transfer',
+        'id'    => 'retype-config-transfer',
+    ]);
+
+    $title = htmlspecialchars(_t('主题设置导入/导出'), ENT_QUOTES);
+    $desc = htmlspecialchars(_t('备份当前配置或在不同站点之间同步主题设置。'), ENT_QUOTES);
+    $note = htmlspecialchars(_t('导出会自动下载 JSON 文件，导入将读取本地 JSON 并填入表单，提交前请再次保存。'), ENT_QUOTES);
+    $exportText = htmlspecialchars(_t('导出 JSON 文件'), ENT_QUOTES);
+    $importText = htmlspecialchars(_t('导入 JSON 文件'), ENT_QUOTES);
+
+    $layout->html(<<<HTML
+<li>
+    <label class="typecho-label">{$title}</label>
+    <div class="typecho-option-description">
+        <p>{$desc}</p>
+        <p>{$note}</p>
+    </div>
+    <p class="typecho-option-actions">
+        <button type="button" class="btn primary" id="retype-export-settings">{$exportText}</button>
+        <button type="button" class="btn" id="retype-import-settings">{$importText}</button>
+    </p>
+    <input type="file" id="retype-import-file" accept="application/json" hidden>
+    <script>
+(function () {
+    function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === 'function') {
+            return window.CSS.escape(value);
+        }
+        return String(value).replace(/([ !\"#\$%&'\\(\\)\\*\\+,\\.\\/\\:;<=>\\?@\\[\\]\\^`\\{\\|\\}~\\\\])/g, '\\\\$1');
+    }
+
+    function getForm() {
+        return document.getElementById('retype-theme-config-form') || document.querySelector('.typecho-page-main form');
+    }
+
+    function getTrackedNames(form) {
+        return Array.from(form.querySelectorAll('[data-retype-setting-name]'))
+            .map(function (node) {
+                return node.getAttribute('data-retype-setting-name');
+            })
+            .filter(Boolean);
+    }
+
+    function getFields(form, name) {
+        return form.querySelectorAll('[name=\"' + cssEscape(name) + '\"]');
+    }
+
+    function readValue(fields) {
+        if (!fields.length) {
+            return null;
+        }
+        const first = fields[0];
+        const type = (first.type || '').toLowerCase();
+
+        if (type === 'radio') {
+            for (const field of fields) {
+                if (field.checked) {
+                    return field.value;
+                }
+            }
+            return null;
+        }
+
+        if (type === 'checkbox') {
+            const values = [];
+            for (const field of fields) {
+                if (field.checked) {
+                    values.push(field.value);
+                }
+            }
+            return values;
+        }
+
+        if (first.tagName === 'SELECT' && first.multiple) {
+            return Array.from(first.options)
+                .filter(function (option) {
+                    return option.selected;
+                })
+                .map(function (option) {
+                    return option.value;
+                });
+        }
+
+        return first.value;
+    }
+
+    function collectSettings(form, names) {
+        const result = {};
+        names.forEach(function (name) {
+            const fields = getFields(form, name);
+            if (!fields.length) {
+                return;
+            }
+            result[name] = readValue(fields);
+        });
+        return result;
+    }
+
+    function applySettings(form, names, data) {
+        const tracked = new Set(names);
+        Object.keys(data || {}).forEach(function (name) {
+            if (!tracked.has(name)) {
+                return;
+            }
+
+            const fields = getFields(form, name);
+            if (!fields.length) {
+                return;
+            }
+
+            const first = fields[0];
+            const type = (first.type || '').toLowerCase();
+            const value = data[name];
+
+            if (type === 'radio') {
+                fields.forEach(function (field) {
+                    field.checked = String(field.value) === String(value);
+                });
+                return;
+            }
+
+            if (type === 'checkbox') {
+                const values = Array.isArray(value) ? value.map(String) : [String(value)];
+                fields.forEach(function (field) {
+                    field.checked = values.includes(String(field.value));
+                });
+                return;
+            }
+
+            if (first.tagName === 'SELECT' && first.multiple) {
+                const values = Array.isArray(value) ? value.map(String) : [String(value)];
+                Array.from(first.options).forEach(function (option) {
+                    option.selected = values.includes(String(option.value));
+                });
+                return;
+            }
+
+            first.value = value == null ? '' : value;
+        });
+    }
+
+    function init() {
+        const form = getForm();
+        if (!form) {
+            return;
+        }
+
+        const names = getTrackedNames(form);
+        if (!names.length) {
+            return;
+        }
+
+        const exportBtn = document.getElementById('retype-export-settings');
+        const importBtn = document.getElementById('retype-import-settings');
+        const fileInput = document.getElementById('retype-import-file');
+
+        if (!exportBtn || !importBtn || !fileInput) {
+            return;
+        }
+
+        function downloadJson(content) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'retype-settings-' + timestamp + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        exportBtn.addEventListener('click', function () {
+            const json = JSON.stringify(collectSettings(form, names), null, 2);
+            downloadJson(json);
+        });
+
+        importBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) {
+                return;
+            }
+
+            const fileName = (file.name || '').toLowerCase();
+            const isJson = fileName.endsWith('.json') || file.type === 'application/json';
+            if (!isJson) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function () {
+                let data;
+                try {
+                    data = JSON.parse(reader.result);
+                } catch (error) {
+                    console.error('Typecho ReType: JSON parse error', error);
+                    return;
+                }
+                applySettings(form, names, data);
+            };
+            reader.onerror = function () {
+                console.error('Typecho ReType: File read error', reader.error);
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+</li>
+HTML);
+
+    $form->addItem($layout);
+}
+
+/**
  * 主题配置
  * 
  * @param \Typecho\Widget\Helper\Form $form 表单对象
  */
 function themeConfig($form)
 {
+    $form->setAttribute('id', 'retype-theme-config-form');
+    retypeAttachSettingsTransferToolbar($form);
+
     $logoUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'logoUrl',
         null,
@@ -47,7 +320,7 @@ function themeConfig($form)
         _t('站点 LOGO 地址'),
         _t('在这里填入一个图片 URL 地址, 以在网站标题前加上一个 LOGO')
     );
-    $form->addInput($logoUrl);
+    retypeAddThemeSettingInput($form, $logoUrl);
 
     $enableRemoteFonts = new \Typecho\Widget\Helper\Form\Element\Radio(
         'enableRemoteFonts',
@@ -56,7 +329,7 @@ function themeConfig($form)
         _t('加载远程字体'),
         _t('禁用后将使用系统字体，避免首屏等待远程字体。如果启用，建议搭配 font-display:swap 的字体文件。')
     );
-    $form->addInput($enableRemoteFonts);
+    retypeAddThemeSettingInput($form, $enableRemoteFonts);
 
     $fontStylesheetUrls = new \Typecho\Widget\Helper\Form\Element\Textarea(
         'fontStylesheetUrls',
@@ -66,7 +339,7 @@ function themeConfig($form)
         _t('用于引入自定义字体的 CSS 文件，可填写多个地址，每行一个。留空或禁用「加载远程字体」将不引入远程字体。')
     );
     $fontStylesheetUrls->input->setAttribute('rows', 3);
-    $form->addInput($fontStylesheetUrls);
+    retypeAddThemeSettingInput($form, $fontStylesheetUrls);
 
     $bootstrapCssUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'bootstrapCssUrl',
@@ -75,7 +348,7 @@ function themeConfig($form)
         _t('Bootstrap CSS 地址'),
         _t('用于加载 Bootstrap 样式。建议填写国内可访问的 CDN，留空将使用默认地址。')
     );
-    $form->addInput($bootstrapCssUrl);
+    retypeAddThemeSettingInput($form, $bootstrapCssUrl);
 
     $bootstrapJsUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'bootstrapJsUrl',
@@ -84,7 +357,7 @@ function themeConfig($form)
         _t('Bootstrap JS 地址'),
         _t('用于加载 Bootstrap 交互脚本。建议填写国内可访问的 CDN，留空将使用默认地址。')
     );
-    $form->addInput($bootstrapJsUrl);
+    retypeAddThemeSettingInput($form, $bootstrapJsUrl);
 
     $bootstrapIconsCssUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'bootstrapIconsCssUrl',
@@ -93,7 +366,7 @@ function themeConfig($form)
         _t('Bootstrap Icons CSS 地址'),
         _t('用于加载 Bootstrap Icons 图标字体。')
     );
-    $form->addInput($bootstrapIconsCssUrl);
+    retypeAddThemeSettingInput($form, $bootstrapIconsCssUrl);
 
     $prismCssUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'prismCssUrl',
@@ -102,7 +375,7 @@ function themeConfig($form)
         _t('Prism CSS 地址'),
         _t('用于代码高亮的样式文件。')
     );
-    $form->addInput($prismCssUrl);
+    retypeAddThemeSettingInput($form, $prismCssUrl);
 
     $prismJsUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'prismJsUrl',
@@ -111,7 +384,7 @@ function themeConfig($form)
         _t('Prism JS 地址'),
         _t('用于代码高亮的脚本文件。')
     );
-    $form->addInput($prismJsUrl);
+    retypeAddThemeSettingInput($form, $prismJsUrl);
 
     $katexCssUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'katexCssUrl',
@@ -120,7 +393,7 @@ function themeConfig($form)
         _t('KaTeX CSS 地址'),
         _t('用于渲染 LaTeX 的样式文件。')
     );
-    $form->addInput($katexCssUrl);
+    retypeAddThemeSettingInput($form, $katexCssUrl);
 
     $katexJsUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'katexJsUrl',
@@ -129,7 +402,7 @@ function themeConfig($form)
         _t('KaTeX JS 地址'),
         _t('用于渲染 LaTeX 的核心脚本。')
     );
-    $form->addInput($katexJsUrl);
+    retypeAddThemeSettingInput($form, $katexJsUrl);
 
     $katexAutoRenderJsUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'katexAutoRenderJsUrl',
@@ -138,7 +411,7 @@ function themeConfig($form)
         _t('KaTeX 自动渲染脚本地址'),
         _t('用于扫描页面内容并自动渲染 LaTeX 语法。')
     );
-    $form->addInput($katexAutoRenderJsUrl);
+    retypeAddThemeSettingInput($form, $katexAutoRenderJsUrl);
 
     $primaryNavItems = new \Typecho\Widget\Helper\Form\Element\Textarea(
         'primaryNavItems',
@@ -148,7 +421,7 @@ function themeConfig($form)
         _t('每行使用“键=值;键=值”的形式定义一个导航，例如：label=首页;href=/;icon=bi bi-house;match=index。留空使用默认值。')
     );
     $primaryNavItems->input->setAttribute('rows', 4);
-    $form->addInput($primaryNavItems);
+    retypeAddThemeSettingInput($form, $primaryNavItems);
 
     $secondaryNavItems = new \Typecho\Widget\Helper\Form\Element\Textarea(
         'secondaryNavItems',
@@ -158,7 +431,7 @@ function themeConfig($form)
         _t('格式同上，可用于社交链接或额外菜单项。示例：label=RSS;href={feed};icon=bi bi-rss;match=feed;target=_blank。')
     );
     $secondaryNavItems->input->setAttribute('rows', 3);
-    $form->addInput($secondaryNavItems);
+    retypeAddThemeSettingInput($form, $secondaryNavItems);
 
     $icpNumber = new \Typecho\Widget\Helper\Form\Element\Text(
         'icpNumber',
@@ -167,7 +440,7 @@ function themeConfig($form)
         _t('ICP备案号'),
         _t('在此填写备案号（例如：粤ICP备12345678号）。留空则不显示备案信息。')
     );
-    $form->addInput($icpNumber);
+    retypeAddThemeSettingInput($form, $icpNumber);
 }
 
 /**
